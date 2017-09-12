@@ -19,6 +19,8 @@ Now get_param return singl data array
 !!! Изменения: 12.09
 Код приведен в частичное соотвествие с PEP8.
 Добавленно описание функций
+DataField теперь DataDigitalField и возвращает число вместо строк.
+Добавленна функциия run --  производит обработку данных, либо выдает сообщение об ошибке
 """
 
 
@@ -36,7 +38,8 @@ from math import*
 # import pylab
 # Импортируем пакет со вспомогательными функциями
 # from matplotlib import mlab
-
+# TODO добавить метод insert DataDigitalField
+# TODO необходимо сделать нормальый вывод данных в лог
 # TODO add graphic plot
 # TODO I have a very good idea with this
 FIELDS = {'azimut': ('Угловые поля фотодатчика по азимуту:', 'A1=', 'A2='),
@@ -146,7 +149,7 @@ class SolarMain(MainWindow):
         self.data_log = DataLog('Результаты расчета:')
         self.data_log.pack()
 
-        Button(text='Расчитать', command=lambda: self.calculate(list_of_params)).pack()
+        Button(text='Расчитать', command=lambda: self.run(list_of_params)).pack()
         Button(text='По умолчанию', command=lambda: self.default('-4.3')).pack()
 
     def make_fields(self):
@@ -180,11 +183,10 @@ class SolarMain(MainWindow):
     @staticmethod
     def get_param(list_of_pr):
         """
-        Извлекает данные их полей ввода и  преобразует в единый список
+        Извлекает данные их полей ввода и  преобразует в единый список.
         :params обобщеный список данных из полей ввода
         """
-        params = []
-
+        params = list()
         # Return True if arg1 in itarable
         if isinstance(list_of_pr, collections.Iterable):
             for field in list_of_pr:
@@ -198,7 +200,6 @@ class SolarMain(MainWindow):
                     params.append(data)
 
         else:
-
             num = list_of_pr.get()
             if num:
                 params.append(num)
@@ -207,14 +208,33 @@ class SolarMain(MainWindow):
 
     def print(self, data):
         self.data_log.send(data)
-        
-    def calculate(self, list_of_pr):
 
-        params = self.get_param(list_of_pr)
-        A1, A2, F1, F2, x1, y1, z1, R = params
+    def run(self, list_of_params):
+        """
+        Запрашивает данные из списка параметров. 
+        Проверяет корректность введенных данных.
+        В случае неверных занчений выдает окно об ошибке.
+        Если ввод корректен, вызывает расчет.
+        Если в процессе расчета есть выводятся математические ошибки, выводится сообще.
+        """
+
+        data = self.get_param(list_of_params)
+        if False in data:
+            showinfo(title='Error', message=u'Некорректно введеные данные:')
+        else:
+            try:
+                self.calculate(data)
+            except Exception:
+                showinfo(title='Error', message=u'Некорректно введеные данные:')
+
+
+    def calculate(self, data):
+
+        A1, A2, F1, F2, x1, y1, z1, R = data
 
         stepF = 3
         stepA = A2-A1
+        # TODO Возможно тут стоит использовать целочисленное деление вместо округляения?
         Fit = round((F2-F1)/stepF)
         Ait = round((A2-A1)/stepA)
 
@@ -222,7 +242,7 @@ class SolarMain(MainWindow):
         ylist=[]
         result = []
 
-        print("i= ", Fit, "k= ", Ait)
+        self.print(("i= ", Fit, "k= ", Ait))
         for i in range(Fit+1):
             for k in range(Ait+1):
                 F = F1+stepF*i
@@ -254,7 +274,7 @@ class SolarMain(MainWindow):
                         # Координаты вдоль развертки окружности цилиндра
                         Xp = 2*pi*R*L/360
                         # Yр, Xp - координаты точки на рзвертке цилиндра
-                        print('F= ', F, 'A= ', A, 'R= ', R,'Xc= ', Xc, 'Yc= ', Yc, 'Zc= ', Zc, 'Xp= ', Xp, 'Yр= ', Yр)
+                        self.print(('F= ', F, 'A= ', A, 'R= ', R,'Xc= ', Xc, 'Yc= ', Yc, 'Zc= ', Zc, 'Xp= ', Xp, 'Yр= ', Yр))
                         result.append((F, A, R, Xp, Yр))
                 elif F > F2:
                         F = F2
@@ -284,7 +304,7 @@ class SolarMain(MainWindow):
                         # Координаты вдоль развертки окружности цилиндра
                         Xp = 2*pi*R*L/360
                         # Yр, Xp - координаты точки на рзвертке цилиндра
-                        print('F= ', F, 'A= ', A, 'R= ', R,'Xc= ', Xc, 'Yc= ', Yc, 'Zc= ', Zc, 'Xp= ', Xp, 'Yр= ', Yр) 
+                        self.print(('F= ', F, 'A= ', A, 'R= ', R,'Xc= ', Xc, 'Yc= ', Yc, 'Zc= ', Zc, 'Xp= ', Xp, 'Yр= ', Yр))
                 xlist.append(Xp)
                 ylist.append(Yр)
                 result.append((F, A, R, Xp, Yр))
