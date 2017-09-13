@@ -63,16 +63,16 @@ class MainWindow(Tk):
 
 
 class DataLog(Frame):
-    def __init__(self, name):   # __init__-метод, вызывается сразу, self-экземпляр
-        Frame.__init__(self)    # вызываем метод Frame-создание рамки
-        Label(text=name, justify='left').pack(fill='x')    # присваиваем name начение text
+    def __init__(self, name):
+        Frame.__init__(self)
+        Label(text=name, justify='left').pack(fill='x')
         self.log = Text(height=10, width=50,)
         self.log.pack(fill='x')
 
-    def send(self, data):
-        # вставляем в конец списка log значения data в конец и со сносом на новую строку
-        self.log.insert('end', data)
-        self.log.insert('end', '\n')
+    def insert(self, *data):
+        for part in data:
+            self.log.insert('end', part)
+            self.log.insert('end', '\n')
 
 
 class DataDigitalField(Frame):
@@ -111,6 +111,18 @@ class DataDigitalField(Frame):
 
         return data
 
+    def insert(self, data):
+        """
+        Ожидает на вход список переменных, которые заносит в ячейки данных
+        """
+        for field in self.field_list:
+            if data:
+                field.insert(0, data.pop(0))
+
+    def clear(self):
+        for field in self.field_list:
+            field.delete(0)
+
     @staticmethod
     def to_digit(data):
         """
@@ -143,14 +155,14 @@ class SolarMain(MainWindow):
         self.title(appname)
 
         # список размещенных на форме полей ввода
-        list_of_params = self.make_fields()
+        data_fields = self.make_fields()
 
         # Размещение окна журнала операция
         self.data_log = DataLog('Результаты расчета:')
         self.data_log.pack()
 
-        Button(text='Расчитать', command=lambda: self.run(list_of_params)).pack()
-        Button(text='По умолчанию', command=lambda: self.default('-4.3')).pack()
+        Button(text='Расчитать', command=lambda: self.run(data_fields)).pack()
+        Button(text='По умолчанию', command=lambda: self.default(data_fields)).pack()
 
     def make_fields(self):
         """
@@ -169,27 +181,25 @@ class SolarMain(MainWindow):
 
         return azimut, zenit, coord, radius
 
-    def default(self):
-        """
-        Что делает эта функция?
-        """
-        #   F1=  26.7 F2=  94.3 A1=  -4.3 A2=  19.3 R=  39 x1= 9 y1= 2 z1= -8
-        initial_data = [-4.3]   # 19.3,26.7, 94.3,9,2,-8,39]
+    @staticmethod
+    def default(fields):
+        #  F1=  26.7 F2=  94.3 A1=  -4.3 A2=  19.3 R=  39 x1= 9 y1= 2 z1= -8
+        initial_data = ([26.7, 94.3], [-4.3, 19.3], [9, 2, -8], [39])
 
-        field.delete(0, END)
-        field.insert(END, initial_data)
-        return
+        for f in fields:
+            d = initial_data[fields.index(f)]
+            f.insert(d)
 
     @staticmethod
-    def get_param(list_of_pr):
+    def get_param(fields):
         """
         Извлекает данные их полей ввода и  преобразует в единый список.
         :params обобщеный список данных из полей ввода
         """
         params = list()
         # Return True if arg1 in itarable
-        if isinstance(list_of_pr, collections.Iterable):
-            for field in list_of_pr:
+        if isinstance(fields, collections.Iterable):
+            for field in fields:
                 data = field.get()
 
                 if isinstance(data, collections.Iterable):
@@ -200,14 +210,14 @@ class SolarMain(MainWindow):
                     params.append(data)
 
         else:
-            num = list_of_pr.get()
+            num = fields.get()
             if num:
                 params.append(num)
 
         return params
 
-    def print(self, data):
-        self.data_log.send(data)
+    def print(self, *data):
+        self.data_log.insert(data)
 
     def run(self, list_of_params):
         """
@@ -227,7 +237,6 @@ class SolarMain(MainWindow):
             except Exception:
                 showinfo(title='Error', message=u'Некорректно введеные данные:')
 
-
     def calculate(self, data):
 
         A1, A2, F1, F2, x1, y1, z1, R = data
@@ -242,7 +251,7 @@ class SolarMain(MainWindow):
         ylist=[]
         result = []
 
-        self.print(("i= ", Fit, "k= ", Ait))
+        self.print("i= ", Fit, "k= ", Ait)
         for i in range(Fit+1):
             for k in range(Ait+1):
                 F = F1+stepF*i
@@ -274,7 +283,7 @@ class SolarMain(MainWindow):
                         # Координаты вдоль развертки окружности цилиндра
                         Xp = 2*pi*R*L/360
                         # Yр, Xp - координаты точки на рзвертке цилиндра
-                        self.print(('F= ', F, 'A= ', A, 'R= ', R,'Xc= ', Xc, 'Yc= ', Yc, 'Zc= ', Zc, 'Xp= ', Xp, 'Yр= ', Yр))
+                        self.print('F= ', F, 'A= ', A, 'R= ', R,'Xc= ', Xc, 'Yc= ', Yc, 'Zc= ', Zc, 'Xp= ', Xp, 'Yр= ', Yр)
                         result.append((F, A, R, Xp, Yр))
                 elif F > F2:
                         F = F2
@@ -304,7 +313,7 @@ class SolarMain(MainWindow):
                         # Координаты вдоль развертки окружности цилиндра
                         Xp = 2*pi*R*L/360
                         # Yр, Xp - координаты точки на рзвертке цилиндра
-                        self.print(('F= ', F, 'A= ', A, 'R= ', R,'Xc= ', Xc, 'Yc= ', Yc, 'Zc= ', Zc, 'Xp= ', Xp, 'Yр= ', Yр))
+                        self.print('F= ', F, 'A= ', A, 'R= ', R,'Xc= ', Xc, 'Yc= ', Yc, 'Zc= ', Zc, 'Xp= ', Xp, 'Yр= ', Yр)
                 xlist.append(Xp)
                 ylist.append(Yр)
                 result.append((F, A, R, Xp, Yр))
