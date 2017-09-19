@@ -21,13 +21,16 @@ Now get_param return singl data array
 Добавленно описание функций
 DataField теперь DataDigitalField и возвращает число вместо строк.
 Добавленна функциия run --  производит обработку данных, либо выдает сообщение об ошибке
-"""
 
+
+!!! Изменения 19.09
+Добавлено построение графика. Правильность построения проверю позже.
+"""
 
 import collections
 import glob
 import os
-from tkinter import Tk, Text
+from tkinter import Tk, Text, Toplevel
 from tkinter.ttk import Label, Entry, Frame, Button
 from tkinter.messagebox import askyesno, showinfo
 from tkinter.filedialog import *
@@ -35,9 +38,9 @@ from tkinter.filedialog import *
 from math import*
 
 # Импортируем один из пакетов Matplotlib
-# import pylab
+import pylab
 # Импортируем пакет со вспомогательными функциями
-# from matplotlib import mlab
+from matplotlib import mlab
 # TODO добавить метод insert DataDigitalField
 # TODO необходимо сделать нормальый вывод данных в лог
 # TODO add graphic plot
@@ -163,6 +166,7 @@ class SolarMain(MainWindow):
 
         Button(text='Расчитать', command=lambda: self.run(data_fields)).pack()
         Button(text='По умолчанию', command=lambda: self.default(data_fields)).pack()
+        Button(text='График', command=lambda: self.create_window(data_fields)).pack()
 
     def make_fields(self):
         """
@@ -284,7 +288,9 @@ class SolarMain(MainWindow):
                         Xp = 2*pi*R*L/360
                         # Yр, Xp - координаты точки на рзвертке цилиндра
                         self.print('F= ', F, 'A= ', A, 'R= ', R,'Xc= ', Xc, 'Yc= ', Yc, 'Zc= ', Zc, 'Xp= ', Xp, 'Yр= ', Yр)
-                        result.append((F, A, R, Xp, Yр))
+
+                        xlist.append(Xp)
+                        ylist.append(Yр)
                 elif F > F2:
                         F = F2
                         # Его направляющие косинусы в сферических координатах (1):
@@ -314,19 +320,42 @@ class SolarMain(MainWindow):
                         Xp = 2*pi*R*L/360
                         # Yр, Xp - координаты точки на рзвертке цилиндра
                         self.print('F= ', F, 'A= ', A, 'R= ', R,'Xc= ', Xc, 'Yc= ', Yc, 'Zc= ', Zc, 'Xp= ', Xp, 'Yр= ', Yр)
-                xlist.append(Xp)
-                ylist.append(Yр)
-                result.append((F, A, R, Xp, Yр))
-                self.print(result)
+                        xlist.append(Xp)
+                        ylist.append(Yр)
+        result = [(xlist),(ylist)]
+        print(result)
+        return(result)
 
-    """
-    def graphic(self):
+
+    def create_window(self,list_of_params):
+        data = self.get_param(list_of_params)
+        coordinates = self.calculate(data)
+        xlist = coordinates[0]
+        ylist = coordinates[1]
+            # Нарисуем одномерный график
+        pylab.plot(xlist, ylist)
+
+            # Покажем окно с нарисованным графиком
+        pylab.show()
+        
+        
+
+   
+"""
+class GraphicWindow(MainWindow):
+   
+    def __init__(self):
+
+        MainWindow.__init__(self)
+        self.title("Форма окна")
+    def graphic(self,xlist,ylist):
+        point= self.get_param(list_of_params)
         # Нарисуем одномерный график
         pylab.plot(xlist, ylist)
 
         # Покажем окно с нарисованным графиком
         pylab.show()
-    """
+ """   
 # если запушен как основной процесс, то будет выполняться следующие
 if __name__ == '__main__':
     solar = SolarMain()
