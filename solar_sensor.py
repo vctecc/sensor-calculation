@@ -71,8 +71,9 @@ class DataLog(Frame):
 
     def insert(self, *data):
         for part in data:
-            self.log.insert('end', part)
-            self.log.insert('end', '\n')
+            for i in part:
+                self.log.insert('end', i)
+                self.log.insert('end', '\n')
 
 
 class DataDigitalField(Frame):
@@ -283,7 +284,7 @@ class SolarMain(MainWindow):
                         # Координаты вдоль развертки окружности цилиндра
                         Xp = 2*pi*R*L/360
                         # Yр, Xp - координаты точки на рзвертке цилиндра
-                        self.print('F= ', F, 'A= ', A, 'R= ', R,'Xc= ', Xc, 'Yc= ', Yc, 'Zc= ', Zc, 'Xp= ', Xp, 'Yр= ', Yр)
+                        self.print('F= ', F, 'A= ', A, 'R= ', R, 'Xc= ', Xc, 'Yc= ', Yc, 'Zc= ', Zc, 'Xp= ', Xp, 'Yр= ', Yр)
                         result.append((F, A, R, Xp, Yр))
                 elif F > F2:
                         F = F2
