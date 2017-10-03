@@ -2,23 +2,20 @@
 Программа для расчета окон солнечного датчика.
 Необходимо сделать верхнее меню(для чего пока не понятно)
 Добавить вывод лога расчетов, возможно в отдельный фаил
-Потом подцеплять сами библиотеки для отрисовки графиков, если их нет
 """
 
 import collections
-import glob
-import os
+from math import *
 from tkinter import Tk, Text, Toplevel
 from tkinter.ttk import Label, Entry, Frame, Button
 from tkinter.messagebox import askyesno, showinfo
 from tkinter.filedialog import *
-import threading
-from math import *
 
-# Импортируем один из пакетов Matplotlib
-import pylab
-# Импортируем пакет со вспомогательными функциями
-from matplotlib import mlab
+try:
+    import pylab
+    from matplotlib import mlab
+except ModuleNotFoundError:
+    pass
 
 # TODO необходимо сделать нормальый вывод данных в лог
 # TODO I have a very good idea with this
@@ -39,7 +36,7 @@ class MainWindow(Tk):
 
     def destroy(self):
         if askyesno('!!!', 'Выйти из программы?'):
-            Tk.quit(self)
+            Tk.destroy(self)
 
 
 class DataLog(Frame):
@@ -139,9 +136,11 @@ class SolarMain(MainWindow):
         self.data_log = DataLog('Результаты расчета:')
         self.data_log.pack()
 
-        Button(text='Расчитать', command=lambda: self.run(data_fields)).pack(side=BOTTOM)
-        Button(text='По умолчанию', command=lambda: self.default(data_fields)).pack(side=BOTTOM)
-        Button(text='График', command=lambda: self.create_chart(data_fields)).pack(side=BOTTOM)
+        button_field = Frame()
+        button_field.pack()
+        Button(button_field, text='Расчитать', command=lambda: self.run(data_fields)).pack(side='left')
+        Button(button_field, text='По умолчанию', command=lambda: self.default(data_fields)).pack(side='left')
+        Button(button_field, text='График', command=lambda: self.create_chart(data_fields)).pack(side='left')
 
     @staticmethod
     def make_fields():
@@ -268,6 +267,11 @@ class SolarMain(MainWindow):
     def create_chart(self, list_of_params):
         data = self.get_param(list_of_params)
         points = self.calculate(data)
+
+        # Очищаем область графика
+        pylab.clf()
+        # Сбрасываем значения осей
+        pylab.cla()
 
         lx = [min(points.get('x1'))] + [min(points.get('x2'))]
         ly = [min(points.get('y1'))] + [max(points.get('y2'))]
